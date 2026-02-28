@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -17,7 +18,10 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoImpl implements ICrypto {
 
@@ -102,8 +106,33 @@ public class CryptoImpl implements ICrypto {
     }
 
     @Override
-    public SecretKey generateKey(String password) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public SecretKey generateKey(String mdp) {
+        // genrer une clé à partir d'un mot de passe seulment
+        SecretKey clepbe=null;
+        //on appelle Transforme le mot de passe en tableau de Char
+        //MessageDigest.getInstance("SHA256");
+        char[] password = mdp.toCharArray();
+        PBEKeySpec pbe = new PBEKeySpec(password,
+                "M2-CDSD-S3".getBytes(), 1024, 256);
+        //on vide le tableau de char password
+        mdp="";
+	for (int j = 0; j < password.length; j++) {
+		password[j] = 0;
+	}
+	try {  
+         //on appelle le KDF: PBEKeySpec pour construire une clé
+          SecretKeyFactory kdfFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+          SecretKey keyPBE = kdfFactory.generateSecret(pbe);// cle generique
+          clepbe=new SecretKeySpec(keyPBE.getEncoded(), "AES");
+			
+       } catch (Exception e) {
+	     // TODO Auto-generated catch block
+	      e.printStackTrace();
+       }
+                
+       return clepbe;
+
+
     }
 
     @Override
@@ -127,10 +156,10 @@ public class CryptoImpl implements ICrypto {
     }
 
     @Override
-    public String encrypt(String data, Key key) {
+    public String encrypt(String data, SecretKey key) {
         try {
             Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
-            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            byte[] iv="une chaine de 16".getBytes();
             IvParameterSpec ivspec=new IvParameterSpec(iv);
             cipher.init(Cipher.ENCRYPT_MODE, key,ivspec );
             
@@ -145,15 +174,13 @@ public class CryptoImpl implements ICrypto {
     }
 
     @Override
-    public String decrypt(String data, Key key) {
+    public String decrypt(String data, SecretKey key) {
         try {
             Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
-            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            byte[] iv="une chaine de 16".getBytes();
             IvParameterSpec ivspec=new IvParameterSpec(iv);
             cipher.init(Cipher.DECRYPT_MODE, key,ivspec );
-            
             byte[] dec=cipher.doFinal(hexStringToBytes(data));
-            
             return new String(dec);
             
         } catch (Exception ex) {

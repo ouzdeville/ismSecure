@@ -73,14 +73,14 @@ public interface ICrypto {
      * @param key
      * @return la chaîne de caractères chiffrée au format Base64 
      */
-    public String encrypt(String data, Key key);
+    public String encrypt(String data, SecretKey key);
     /**
      * Déchiffre une chaîne de caractères chiffrée au format Base64 avec une clé secrète
      * @param data
      * @param key
      * @return la chaîne de caractères déchiffrée en UTF8
      */
-    public String decrypt(String data, Key key);
+    public String decrypt(String data, SecretKey key);
 
     public KeyPair generateKeyPair();
     public KeyPair generateKeyPair(String algorithm);
