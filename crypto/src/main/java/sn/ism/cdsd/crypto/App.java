@@ -16,6 +16,7 @@ public class App
         String newChaine = crypto.bytesToHexString(tab);
         System.out.println("nouvelle:"+newChaine);
         System.out.println("olde    :"+chaine);
+        System.out.println("key    :"+crypto.generateKey().toString());
         
     }
 }

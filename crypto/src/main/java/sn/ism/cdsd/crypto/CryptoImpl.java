@@ -6,10 +6,14 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 public class CryptoImpl implements ICrypto {
@@ -81,7 +85,22 @@ public class CryptoImpl implements ICrypto {
 
     @Override
     public SecretKey generateKey() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // keyGenerator
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+
+            SecureRandom secureRandom = new SecureRandom();
+            keyGen.init(256, secureRandom);
+
+            SecretKey secretKey = keyGen.generateKey();
+            return secretKey;
+
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Algorithm not supported: " + e.getMessage());
+            throw new RuntimeException("Key generation failed", e);
+        }
     }
 
     @Override
