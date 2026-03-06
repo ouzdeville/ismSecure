@@ -1,20 +1,19 @@
 package sn.ism.cdsd.crypto;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.security.Key;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.Cipher;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 public class CryptoImpl implements ICrypto {
 
@@ -76,6 +75,7 @@ public class CryptoImpl implements ICrypto {
             String hexKey=parts[1];
             byte[] bytes=hexStringToBytes(hexKey);
             Key key=new javax.crypto.spec.SecretKeySpec(bytes, algo);
+            fis.close();
             return key;
         } catch (Exception ex) {
             Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
@@ -85,22 +85,17 @@ public class CryptoImpl implements ICrypto {
 
     @Override
     public SecretKey generateKey() {
-        // keyGenerator
-        // throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        
         try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-
-            SecureRandom secureRandom = new SecureRandom();
-            keyGen.init(256, secureRandom);
-
-            SecretKey secretKey = keyGen.generateKey();
-            return secretKey;
-
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println("Algorithm not supported: " + e.getMessage());
-            throw new RuntimeException("Key generation failed", e);
+            //SecureRandom sec=SecureRandom.getInstance("SHA1PRNG");
+            ////sec.setSeed("graine".getBytes());
+            KeyGenerator kg=KeyGenerator.getInstance("AES");
+            kg.init(256);
+            return kg.generateKey();
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return null;
+    
     }
 
     @Override
@@ -130,12 +125,38 @@ public class CryptoImpl implements ICrypto {
 
     @Override
     public String encrypt(String data, Key key) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
+            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            IvParameterSpec ivspec=new IvParameterSpec(iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key,ivspec );
+            
+            byte[] enc=cipher.doFinal(data.getBytes());
+            
+            return bytesToHexString(enc);
+            
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        } 
     }
 
     @Override
     public String decrypt(String data, Key key) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
+            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            IvParameterSpec ivspec=new IvParameterSpec(iv);
+            cipher.init(Cipher.DECRYPT_MODE, key,ivspec );
+            
+            byte[] dec=cipher.doFinal(hexStringToBytes(data));
+            
+            return new String(dec);
+            
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        } 
     }
 
     @Override
