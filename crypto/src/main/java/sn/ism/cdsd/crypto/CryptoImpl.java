@@ -32,6 +32,7 @@ public class CryptoImpl implements ICrypto {
         }
         return sb.toString();
      }
+
     @Override
     public byte[] hexStringToBytes(String hexString) {
         int len=hexString.length();
@@ -105,29 +106,42 @@ public class CryptoImpl implements ICrypto {
 
     @Override
     public SecretKey generateKey(String password, String salt) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return generateKey(password, salt, "AES", 65536, 256);
     }
 
     @Override
     public SecretKey generateKey(String password, String salt, String algorithm) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+        return generateKey(password, salt, algorithm, 65536, 256);    }
 
     @Override
     public SecretKey generateKey(String password, String salt, String algorithm, int iterationCount) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return generateKey(password, salt, algorithm, iterationCount, 256);
     }
 
     @Override
     public SecretKey generateKey(String password, String salt, String algorithm, int iterationCount, int keyLength) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            // On utilise PBKDF2 pour dériver une clé à partir du mot de passe
+            javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            java.security.spec.KeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                password.toCharArray(), 
+                salt.getBytes(), 
+                iterationCount, 
+                keyLength
+            );
+            SecretKey tmp = factory.generateSecret(spec);
+            return new javax.crypto.spec.SecretKeySpec(tmp.getEncoded(), algorithm);
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }        
     }
 
     @Override
     public String encrypt(String data, Key key) {
         try {
             Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
-            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            byte[] iv="0123456789ABCDEF".getBytes();
             IvParameterSpec ivspec=new IvParameterSpec(iv);
             cipher.init(Cipher.ENCRYPT_MODE, key,ivspec );
             
@@ -145,7 +159,7 @@ public class CryptoImpl implements ICrypto {
     public String decrypt(String data, Key key) {
         try {
             Cipher cipher=Cipher.getInstance("AES/CBC/PKCS5Padding");
-            byte[] iv="une chaine multiple de 16 28 yhhd".getBytes();
+            byte[] iv="0123456789ABCDEF".getBytes();
             IvParameterSpec ivspec=new IvParameterSpec(iv);
             cipher.init(Cipher.DECRYPT_MODE, key,ivspec );
             
@@ -161,26 +175,49 @@ public class CryptoImpl implements ICrypto {
 
     @Override
     public KeyPair generateKeyPair() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return generateKeyPair("RSA", 2048);
     }
 
     @Override
     public KeyPair generateKeyPair(String algorithm) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return generateKeyPair(algorithm, 2048);
     }
 
     @Override
     public KeyPair generateKeyPair(String algorithm, int keySize) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            java.security.KeyPairGenerator kpg = java.security.KeyPairGenerator.getInstance(algorithm);
+            kpg.initialize(keySize);
+            return kpg.generateKeyPair();
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 
     @Override
     public String encrypt(String data, PublicKey key) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            byte[] enc = cipher.doFinal(data.getBytes());
+            return bytesToHexString(enc);
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 
     @Override
     public String decrypt(String data, PrivateKey key) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            byte[] dec = cipher.doFinal(hexStringToBytes(data));
+            return new String(dec);
+        } catch (Exception ex) {
+            Logger.getLogger(CryptoImpl.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 }
